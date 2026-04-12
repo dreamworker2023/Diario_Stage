@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diario di Bordo Stage</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHERMATA LOGIN
+════════════════════════════════════════════════════════════ -->
+<div id="login-screen" class="screen active">
+
+  <div class="logo-wrap">
+    <div class="logo-box">📋</div>
+    <h1 class="logo-title">Diario di Bordo</h1>
+    <p class="logo-sub">Registro stage aziendale</p>
+  </div>
+
+  <div class="card login-card">
+
+    <!-- Selettore tab Studente / Docente -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" role="tab" onclick="switchTab('student')">Studente</button>
+      <button class="tab-btn"        role="tab" onclick="switchTab('admin')">Docente</button>
+    </div>
+
+    <!-- ── Tab studente – Step 1: cerca studente ── -->
+    <div id="tab-s1" role="tabpanel">
+      <div class="form-group">
+        <label for="s1-code">Codice stage</label>
+        <input id="s1-code" type="text" placeholder="Fornito dal tuo docente"
+               onkeydown="if(event.key==='Enter') loginStep1()">
+      </div>
+      <div class="form-group">
+        <label for="s1-classe">Classe</label>
+        <input id="s1-classe" type="text" placeholder="es. 5A"
+               onkeydown="if(event.key==='Enter') loginStep1()">
+      </div>
+      <div class="form-group">
+        <label for="s1-nome">Nome</label>
+        <input id="s1-nome" type="text" placeholder="Il tuo nome"
+               onkeydown="if(event.key==='Enter') loginStep1()">
+      </div>
+      <div class="form-group">
+        <label for="s1-cognome">Cognome</label>
+        <input id="s1-cognome" type="text" placeholder="Il tuo cognome"
+               onkeydown="if(event.key==='Enter') loginStep1()">
+      </div>
+      <p class="error-msg" id="s1-error" hidden></p>
+      <button class="btn btn-primary btn-block" id="s1-btn" onclick="loginStep1()">
+        Accedi →
+      </button>
+    </div>
+
+    <!-- ── Tab studente – Step 2: prima registrazione ── -->
+    <div id="tab-s2" hidden role="tabpanel">
+      <div class="info-box">
+        Prima registrazione — inserisci i dati del tuo stage.
+      </div>
+      <div class="mini-recap" id="s2-recap"></div>
+      <div class="form-group">
+        <label for="s2-azienda">Azienda di stage</label>
+        <input id="s2-azienda" type="text" placeholder="Nome azienda"
+               onkeydown="if(event.key==='Enter') loginStep2()">
+      </div>
+      <div class="form-group">
+        <label for="s2-tutor">Tutor aziendale</label>
+        <input id="s2-tutor" type="text" placeholder="Nome e cognome del tutor"
+               onkeydown="if(event.key==='Enter') loginStep2()">
+      </div>
+      <p class="error-msg" id="s2-error" hidden></p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="backToStep1()">← Indietro</button>
+        <button class="btn btn-primary"   id="s2-btn" onclick="loginStep2()">Registrati ✓</button>
+      </div>
+    </div>
+
+    <!-- ── Tab docente ── -->
+    <div id="tab-admin" hidden role="tabpanel">
+      <div class="form-group">
+        <label for="admin-pwd">Password docente</label>
+        <input id="admin-pwd" type="password" placeholder="Password"
+               onkeydown="if(event.key==='Enter') adminLogin()">
+      </div>
+      <p class="error-msg" id="admin-error" hidden></p>
+      <button class="btn btn-admin btn-block" id="admin-btn" onclick="adminLogin()">
+        Accedi come docente →
+      </button>
+      <p class="hint">La password è impostata nel file <code>Code.gs</code></p>
+    </div>
+
+  </div><!-- /login-card -->
+
+  <p class="footer-note">I dati vengono salvati su Google Sheets.</p>
+
+</div><!-- /login-screen -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHERMATA DIARIO STUDENTE
+════════════════════════════════════════════════════════════ -->
+<div id="diary-screen" class="screen" hidden>
+
+  <header class="page-header page-header--green">
+    <div class="header-inner">
+      <div class="header-top">
+        <span class="header-brand">📋 Diario di Bordo</span>
+        <button class="btn-exit" onclick="logout()">Esci</button>
+      </div>
+      <div class="student-badge">
+        <h2 id="diary-name">—</h2>
+        <p  id="diary-meta">—</p>
+        <p  id="diary-tutor" class="diary-tutor">—</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-content">
+
+    <!-- Statistiche -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-days">0</div>
+        <div class="stat-label">Giornate registrate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-hours">0h</div>
+        <div class="stat-label">Ore totali</div>
+      </div>
+    </div>
+
+    <!-- Bottone aggiungi -->
+    <button class="add-btn" id="add-btn" onclick="openAddForm()">
+      + Aggiungi giornata
+    </button>
+
+    <!-- Form inserimento / modifica voce -->
+    <div class="form-card" id="entry-form" hidden>
+      <h3 id="form-title" class="form-card__title">Nuova registrazione</h3>
+
+      <div class="form-group">
+        <label for="form-data">Data *</label>
+        <input type="date" id="form-data">
+      </div>
+      <div class="form-group">
+        <label for="form-attivita">Attività svolte *</label>
+        <textarea id="form-attivita" rows="3"
+                  placeholder="Descrivi le attività della giornata..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="form-ore">Ore lavorate *</label>
+          <input type="number" id="form-ore" min="0.5" max="24" step="0.5" placeholder="es. 8">
+        </div>
+        <div class="form-group">
+          <label for="form-valutazione">Valutazione giornata</label>
+          <select id="form-valutazione">
+            <option value="">— Non specificata —</option>
+            <option value="eccellente">⭐⭐⭐⭐⭐ Eccellente</option>
+            <option value="molto_buono">⭐⭐⭐⭐ Molto buono</option>
+            <option value="buono">⭐⭐⭐ Buono</option>
+            <option value="sufficiente">⭐⭐ Sufficiente</option>
+            <option value="da_migliorare">⭐ Da migliorare</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="form-note">Note (opzionale)</label>
+        <input type="text" id="form-note" placeholder="Note aggiuntive...">
+      </div>
+
+      <p class="error-msg" id="form-error" hidden></p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeForm()">Annulla</button>
+        <button class="btn btn-primary"   id="form-submit-btn" onclick="submitForm()">Salva</button>
+      </div>
+    </div>
+
+    <!-- Lista voci diario -->
+    <div id="entries-list"></div>
+
+  </main>
+</div><!-- /diary-screen -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHERMATA PANNELLO DOCENTE
+════════════════════════════════════════════════════════════ -->
+<div id="admin-screen" class="screen" hidden>
+
+  <header class="page-header page-header--dark">
+    <div class="header-inner header-inner--wide">
+      <div class="header-top">
+        <div>
+          <span class="header-brand">👩‍🏫 Pannello Docente</span>
+          <p class="header-sub" id="admin-summary"></p>
+        </div>
+        <button class="btn-exit" onclick="logout()">← Esci</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-content">
+
+    <!-- Vista elenco classi -->
+    <div id="admin-classes-view">
+      <div id="admin-classes-list"></div>
+    </div>
+
+    <!-- Vista dettaglio singola classe -->
+    <div id="admin-class-detail" hidden>
+      <div class="section-header">
+        <button class="btn-back" onclick="backToClasses()">←</button>
+        <h2 id="detail-title" class="section-title">Classe</h2>
+        <button class="btn btn-primary btn-sm" onclick="exportCurrentClass()">📥 Esporta Excel</button>
+      </div>
+      <div id="admin-students-list"></div>
+    </div>
+
+  </div>
+</div><!-- /admin-screen -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL CONFERMA ELIMINAZIONE VOCE
+════════════════════════════════════════════════════════════ -->
+<div id="delete-modal" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3 class="modal__title">Elimina registrazione</h3>
+    <p  class="modal__body">Eliminare questa registrazione? L'operazione non è reversibile.</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeDeleteModal()">Annulla</button>
+      <button class="btn btn-danger"    onclick="confirmDeleteEntry()">Elimina</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS (caricati in fondo per performance)
+════════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/diary.js"></script>
+<script src="js/admin.js"></script>
+
+</body>
+</html>
