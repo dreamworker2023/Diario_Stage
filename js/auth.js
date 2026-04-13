@@ -90,6 +90,8 @@ async function loginStep2() {
     const res = await api('registerStudent', { ...loginData, azienda, tutor, email });
     student = res.student;
     entries = [];
+    // Comunica all'utente se l'invito calendar è stato mandato automaticamente
+    student._calendarInviteSent = res.calendarInviteSent || false;
     renderDiary();
     showScreen('diary');
   } catch (err) {

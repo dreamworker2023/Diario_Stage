@@ -229,12 +229,31 @@ function buildCalendarUrl() {
 }
 
 function renderCalendarBanner() {
-  // Mostra il banner solo se non è già stato chiuso in questa sessione
+  const banner = document.getElementById('calendar-banner');
+  const link   = document.getElementById('calendar-link');
+  const title  = banner.querySelector('strong');
+  const desc   = banner.querySelector('p');
+
+  // Se il .ics è già stato mandato via email mostra un messaggio diverso,
+  // più leggero, che informa senza chiedere azione
+  if (student._calendarInviteSent || student.invioCalendar) {
+    title.textContent = 'Promemoria calendario inviato via email ✓';
+    desc.textContent  =
+      'Hai ricevuto un\'email con il file .ics allegato: aprilo per aggiungere ' +
+      'automaticamente il promemoria al tuo calendario. ' +
+      'Puoi anche aggiungerlo manualmente qui sotto.';
+  } else {
+    title.textContent = 'Attiva il promemoria giornaliero';
+    desc.textContent  =
+      'Aggiungi un evento ricorrente al tuo Google Calendar per ricordarti ' +
+      'di compilare il diario ogni sera alle 18:00.';
+  }
+
+  // Nasconde il banner se già chiuso in questa sessione
   const dismissed = sessionStorage.getItem('calendarBannerDismissed');
-  const banner    = document.getElementById('calendar-banner');
   if (dismissed) { banner.hidden = true; return; }
 
-  document.getElementById('calendar-link').href = buildCalendarUrl();
+  link.href    = buildCalendarUrl();
   banner.hidden = false;
 }
 
