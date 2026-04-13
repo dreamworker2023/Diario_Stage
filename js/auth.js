@@ -78,6 +78,7 @@ function backToStep1() {
 async function loginStep2() {
   const azienda = v('s2-azienda');
   const tutor   = v('s2-tutor');
+  const email   = v('s2-email');  // opzionale
 
   if (!azienda) { setErr('s2-error', 'Inserisci il nome dell\'azienda.'); return; }
   if (!tutor)   { setErr('s2-error', 'Inserisci il nome del tutor aziendale.'); return; }
@@ -86,7 +87,7 @@ async function loginStep2() {
   setBtnLoading('s2-btn', true, 'Registrati ✓');
 
   try {
-    const res = await api('registerStudent', { ...loginData, azienda, tutor });
+    const res = await api('registerStudent', { ...loginData, azienda, tutor, email });
     student = res.student;
     entries = [];
     renderDiary();
@@ -108,9 +109,10 @@ async function adminLogin() {
 
   try {
     const res = await api('adminLogin', { password: pwd });
-    adminStudents = res.students  || [];
-    adminDiaries  = res.diaries   || [];
-    adminPassword = pwd;
+    adminStudents   = res.students   || [];
+    adminDiaries    = res.diaries    || [];
+    adminStageDates = res.stageDates || [];
+    adminPassword   = pwd;
     renderAdmin();
     showScreen('admin');
   } catch (err) {

@@ -5,6 +5,7 @@
 // ─── Stato ───────────────────────────────────────────────────────────────
 let adminStudents = [];   // tutti gli studenti
 let adminDiaries  = [];   // tutte le voci (tutti gli studenti)
+let adminStageDates = []; // date stage per classe dal foglio "Date Stage"
 let selectedClass = null; // classe correntemente visualizzata nel dettaglio
 let adminPassword = '';   // password admin (necessaria per deleteStudent)
 
@@ -29,20 +30,31 @@ function renderAdmin() {
     return;
   }
 
-  list.innerHTML = keys.map(classe => `
-    <div class="class-card">
-      <div>
-        <h3>Classe ${esc(classe)}</h3>
-        <p>${classi[classe].length} ${classi[classe].length === 1 ? 'studente' : 'studenti'}</p>
-      </div>
-      <div class="class-actions">
-        <button class="btn btn-secondary btn-sm"
-                onclick="openClassDetail('${esc(classe)}')">Dettagli</button>
-        <button class="btn btn-primary btn-sm"
-                onclick="exportClass('${esc(classe)}')">📥 Excel</button>
-      </div>
-    </div>`
-  ).join('');
+  list.innerHTML = keys.map(classe => {
+    const dates   = getStageDatesForClass(classe);
+    const periodo = dates
+      ? `📅 ${fmtDateIT(dates.dataInizio)} → ${fmtDateIT(dates.dataFine)}`
+      : '📅 Periodo non configurato nel foglio "Date Stage"';
+    const isNow   = dates ? isActiveToday(dates) : false;
+    const pill    = isNow
+      ? `<span class="stage-pill stage-pill--active">In corso</span>`
+      : (dates ? `<span class="stage-pill">Programmato</span>` : '');
+
+    return `
+      <div class="class-card">
+        <div>
+          <h3>Classe ${esc(classe)} ${pill}</h3>
+          <p>${classi[classe].length} ${classi[classe].length === 1 ? 'studente' : 'studenti'}</p>
+          <p class="stage-period">${esc(periodo)}</p>
+        </div>
+        <div class="class-actions">
+          <button class="btn btn-secondary btn-sm"
+                  onclick="openClassDetail('${esc(classe)}')">Dettagli</button>
+          <button class="btn btn-primary btn-sm"
+                  onclick="exportClass('${esc(classe)}')">📥 Excel</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ─── Utilità dati ─────────────────────────────────────────────────────────
@@ -60,6 +72,27 @@ function diaryByStudent() {
     acc[d.studentId].push(d);
     return acc;
   }, {});
+}
+
+/** Cerca le date di stage per una classe (case-insensitive) */
+function getStageDatesForClass(classe) {
+  if (!adminStageDates) return null;
+  const norm = classe.trim().toLowerCase();
+  return adminStageDates.find(d => d.classe.toLowerCase() === norm) || null;
+}
+
+/** Formatta YYYY-MM-DD → gg/mm/aaaa */
+function fmtDateIT(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/** Restituisce true se oggi è dentro il periodo di stage */
+function isActiveToday(dates) {
+  if (!dates || !dates.dataInizio || !dates.dataFine) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return today >= dates.dataInizio && today <= dates.dataFine;
 }
 
 // ─── Dettaglio classe ─────────────────────────────────────────────────────

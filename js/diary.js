@@ -19,6 +19,7 @@ function renderDiary() {
   document.getElementById('diary-tutor').textContent =
     '👤 Tutor: ' + (student.tutor || '—');
 
+  renderCalendarBanner();
   renderEntries();
 }
 
@@ -167,7 +168,80 @@ async function submitForm() {
   setBtnLoading('form-submit-btn', false, label);
 }
 
-// ─── Modal eliminazione voce ──────────────────────────────────────────────
+// ─── Google Calendar banner ───────────────────────────────────────────────
+
+/**
+ * Converte una data YYYY-MM-DD in stringa formato Google Calendar: YYYYMMDD
+ * e aggiunge l'ora in UTC (16:00 UTC = 18:00 ora italiana CEST).
+ */
+function toGCalDateTime(isoDate, endOfDay) {
+  const compact = isoDate.replace(/-/g, '');
+  return endOfDay
+    ? compact + 'T165959Z'   // fine giornata (18:59 CEST)
+    : compact + 'T160000Z';  // inizio (18:00 CEST)
+}
+
+/**
+ * Costruisce l'URL per creare un evento ricorrente giornaliero su Google Calendar.
+ * Usa le date di stage della classe dello studente (dataInizio / dataFine).
+ * Se le date non sono ancora configurate nel foglio "Date Stage", crea
+ * un evento che parte da domani e dura 90 giorni come fallback.
+ */
+function buildCalendarUrl() {
+  let startDate, endDate;
+
+  if (student.dataInizio && student.dataFine) {
+    // Date reali prese dal foglio "Date Stage"
+    startDate = student.dataInizio;
+    endDate   = student.dataFine;
+  } else {
+    // Fallback: da domani per 90 giorni
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const ninetyDays = new Date(tomorrow);
+    ninetyDays.setDate(ninetyDays.getDate() + 89);
+    startDate = tomorrow.toISOString().slice(0, 10);
+    endDate   = ninetyDays.toISOString().slice(0, 10);
+  }
+
+  const gcStart = toGCalDateTime(startDate, false);
+  const gcEnd   = toGCalDateTime(startDate, false).replace('T160000Z', 'T163000Z'); // 30 min
+  const gcUntil = toGCalDateTime(endDate, true);  // UNTIL = ultimo giorno incluso
+
+  const text    = encodeURIComponent('📋 Compila il Diario di Bordo Stage');
+  const details = encodeURIComponent(
+    `Ricordati di registrare le attività svolte oggi durante il tuo stage.\n` +
+    `Azienda: ${student.azienda} — Classe: ${student.classe}\n` +
+    (student.dataInizio
+      ? `Periodo: ${student.dataInizio} → ${student.dataFine}`
+      : '')
+  );
+
+  // RRULE giornaliero fino alla data di fine stage
+  const recur = encodeURIComponent(`RRULE:FREQ=DAILY;UNTIL=${gcUntil}`);
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${text}` +
+    `&details=${details}` +
+    `&dates=${gcStart}/${gcEnd}` +
+    `&recur=${recur}` +
+    `&ctz=Europe/Rome`;
+}
+
+function renderCalendarBanner() {
+  // Mostra il banner solo se non è già stato chiuso in questa sessione
+  const dismissed = sessionStorage.getItem('calendarBannerDismissed');
+  const banner    = document.getElementById('calendar-banner');
+  if (dismissed) { banner.hidden = true; return; }
+
+  document.getElementById('calendar-link').href = buildCalendarUrl();
+  banner.hidden = false;
+}
+
+function dismissCalendarBanner() {
+  sessionStorage.setItem('calendarBannerDismissed', '1');
+  document.getElementById('calendar-banner').hidden = true;
+}
 function showDeleteModal(entryId) {
   deleteTarget = entryId;
   const modal  = document.getElementById('delete-modal');
