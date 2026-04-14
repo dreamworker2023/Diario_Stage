@@ -71,6 +71,15 @@
         <input id="s2-tutor" type="text" placeholder="Nome e cognome del tutor"
                onkeydown="if(event.key==='Enter') loginStep2()">
       </div>
+      <div class="form-group">
+        <label for="s2-email">
+          Email per promemoria
+          <span class="label-optional">(opzionale)</span>
+        </label>
+        <input id="s2-email" type="email" placeholder="tua@email.com"
+               onkeydown="if(event.key==='Enter') loginStep2()">
+        <p class="field-hint">Se inserita, riceverai un'email ogni sera quando non hai ancora compilato il diario.</p>
+      </div>
       <p class="error-msg" id="s2-error" hidden></p>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="backToStep1()">← Indietro</button>
@@ -89,7 +98,7 @@
       <button class="btn btn-admin btn-block" id="admin-btn" onclick="adminLogin()">
         Accedi come docente →
       </button>
-      
+      <p class="hint">La password è impostata nel file <code>Code.gs</code></p>
     </div>
 
   </div><!-- /login-card -->
@@ -129,6 +138,21 @@
       <div class="stat-card">
         <div class="stat-value" id="stat-hours">0h</div>
         <div class="stat-label">Ore totali</div>
+      </div>
+    </div>
+
+    <!-- Banner Google Calendar -->
+    <div class="calendar-banner" id="calendar-banner" hidden>
+      <div class="calendar-banner__text">
+        <span class="calendar-banner__icon">📅</span>
+        <div>
+          <strong>Attiva il promemoria giornaliero</strong>
+          <p>Aggiungi un evento ricorrente al tuo Google Calendar per ricordarti di compilare il diario ogni sera alle 18:00.</p>
+        </div>
+      </div>
+      <div class="calendar-banner__actions">
+        <a id="calendar-link" href="#" target="_blank" rel="noopener" class="btn btn-calendar">Apri Google Calendar</a>
+        <button class="btn-dismiss" onclick="dismissCalendarBanner()" title="Chiudi">&times;</button>
       </div>
     </div>
 
